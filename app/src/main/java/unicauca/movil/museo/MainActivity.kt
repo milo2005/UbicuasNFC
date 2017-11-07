@@ -9,8 +9,14 @@ import android.nfc.Tag
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.widget.Toast
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import unicauca.movil.museo.model.Pintura
+import unicauca.movil.museo.net.ApiClient
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), Callback<Pintura> {
 
     lateinit var nfcAdapter: NfcAdapter
 
@@ -24,6 +30,7 @@ class MainActivity : AppCompatActivity() {
         nfcAdapter = nfcManager.defaultAdapter
     }
 
+    //region NFC
     override fun onResume() {
         super.onResume()
 
@@ -48,6 +55,8 @@ class MainActivity : AppCompatActivity() {
         val id = tag.id
         val idHex = byteToStringHex(id)
         Log.i("NFCID", idHex)
+        ApiClient.pinturas.getPictureInfo(idHex)
+                .enqueue(this)
     }
 
     fun byteToStringHex(bytes: ByteArray): String {
@@ -55,5 +64,26 @@ class MainActivity : AppCompatActivity() {
         bytes.forEach { buffer.append(it.toString(16)) }
         return buffer.toString();
     }
+    //endregion
+
+    //region Pinturas Api
+    override fun onResponse(call: Call<Pintura>?, response: Response<Pintura>) {
+        when(response.code()){
+            200->{
+                val pintura = response.body()
+                // Navegar a otro Activity y mandarle la info
+            }
+            404->Toast.makeText(this, "Pintura no encontrada", Toast.LENGTH_SHORT)
+                    .show()
+            else->Toast.makeText(this, "Error al recuperar información", Toast.LENGTH_SHORT)
+                    .show()
+        }
+    }
+
+    override fun onFailure(call: Call<Pintura>?, t: Throwable?) {
+        Toast.makeText(this, "Error al recuperar información", Toast.LENGTH_SHORT)
+                .show()
+    }
+    //endregion
 
 }
